@@ -1,0 +1,8 @@
+/Debug
+/Startup
+/.git
+/.settings
+.project
+.cproject
+FSolder_V4.1 Debug.launch
+STM32F103C8TX_FLASH.ld
