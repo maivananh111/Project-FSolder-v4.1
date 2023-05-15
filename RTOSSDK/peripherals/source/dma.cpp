@@ -201,7 +201,7 @@ stm_ret_t dma::start(uint32_t Src_Address, uint32_t Dest_Address, uint32_t Numbe
 
 		ClearAllIntrFlag();
 
-		_dma_channel -> CCR |= _conf->interruptselect;
+		_dma_channel -> CCR |= _conf->interruptoption;
 		_dma_channel -> CCR |= DMA_CCR_EN;
 
 #elif defined(STM32F4)
@@ -227,7 +227,7 @@ stm_ret_t dma::start(uint32_t Src_Address, uint32_t Dest_Address, uint32_t Numbe
 		}
 		ClearAllIntrFlag();
 
-		_conf -> stream -> CR  |= _conf -> interruptselect | DMA_SxCR_TEIE | DMA_SxCR_DMEIE;
+		_conf -> stream -> CR  |= _conf -> interruptoption | DMA_SxCR_TEIE | DMA_SxCR_DMEIE;
 		_conf -> stream -> CR |= DMA_SxCR_EN;
 
 #endif
@@ -303,10 +303,9 @@ stm_ret_t dma::stop(void){
 	return ret;
 }
 
-stm_ret_t dma::poll_for_tranfer(dma_interruptselect_t PollLevel, uint32_t TimeOut){
+stm_ret_t dma::poll_for_tranfer(dma_interruptoption_t PollLevel, uint32_t TimeOut){
 	stm_ret_t ret;
 	__IO uint32_t PollValue = 0U, tick, isr;
-	__IO uint32_t TE_SR_Value = (uint32_t)(0x08U << (_conf->channel));
 
 	if(_state != STM_BUSY){
 		set_return(&ret, STM_BUSY, __LINE__);
@@ -344,6 +343,7 @@ stm_ret_t dma::poll_for_tranfer(dma_interruptselect_t PollLevel, uint32_t TimeOu
 
 	tick = get_tick();
 #if defined(STM32F1)
+	__IO uint32_t TE_SR_Value = (uint32_t)(0x08U << (_conf->channel));
 	isr = GetISR();
 	while(!(isr & PollValue)){
 		if(get_tick() - tick > TimeOut){
@@ -509,49 +509,49 @@ void DMA_IRQ_Handler(DMA_TypeDef *pdma, DMA_Stream_TypeDef *stream, dma *dmaptr)
 #if defined(DMA1_Channel1)
 dma dma1_1(DMA1);
 dma_t dma1_channel1 = &dma1_1;
-void DMA1_Channel1_IRQHandler(void){
+__WEAK void DMA1_Channel1_IRQHandler(void){
 	DMA_IRQ_Handler(DMA1, DMA1_Channel1, dma1_channel1);
 }
 #endif /* DMA1_Channel1 */
 #if defined(DMA1_Channel2)
 dma dma1_2(DMA1);
 dma_t dma1_channel2 = &dma1_2;
-void DMA1_Channel2_IRQHandler(void){
+__WEAK void DMA1_Channel2_IRQHandler(void){
 	DMA_IRQ_Handler(DMA1, DMA1_Channel2, dma1_channel2);
 }
 #endif /* DMA1_Channel2 */
 #if defined(DMA1_Channel3)
 dma dma1_3(DMA1);
 dma_t dma1_channel3 = &dma1_3;
-void DMA1_Channel3_IRQHandler(void){
+__WEAK void DMA1_Channel3_IRQHandler(void){
 	DMA_IRQ_Handler(DMA1, DMA1_Channel3, dma1_channel3);
 }
 #endif /* DMA1_Channel3 */
 #if defined(DMA1_Channel4)
 dma dma1_4(DMA1);
 dma_t dma1_channel4 = &dma1_4;
-void DMA1_Channel4_IRQHandler(void){
+__WEAK void DMA1_Channel4_IRQHandler(void){
 	DMA_IRQ_Handler(DMA1, DMA1_Channel4, dma1_channel4);
 }
 #endif /* DMA1_Channel4 */
 #if defined(DMA1_Channel5)
 dma dma1_5(DMA1);
 dma_t dma1_channel5 = &dma1_5;
-void DMA1_Channel5_IRQHandler(void){
+__WEAK void DMA1_Channel5_IRQHandler(void){
 	DMA_IRQ_Handler(DMA1, DMA1_Channel5, dma1_channel5);
 }
 #endif /* DMA1_Channel5 */
 #if defined(DMA1_Channel6)
 dma dma1_6(DMA1);
 dma_t dma1_channel6 = &dma1_6;
-void DMA1_Channel6_IRQHandler(void){
+__WEAK void DMA1_Channel6_IRQHandler(void){
 	DMA_IRQ_Handler(DMA1, DMA1_Channel6, dma1_channel6);
 }
 #endif /* DMA1_Channel6 */
 #if defined(DMA1_Channel7)
 dma dma1_7(DMA1);
 dma_t dma1_channel7 = &dma1_7;
-void DMA1_Channel7_IRQHandler(void){
+__WEAK void DMA1_Channel7_IRQHandler(void){
 	DMA_IRQ_Handler(DMA1, DMA1_Channel7, dma1_channel7);
 }
 #endif /* DMA1_Channel4 */
@@ -562,49 +562,49 @@ void DMA1_Channel7_IRQHandler(void){
 #if defined(DMA2_Channel1)
 dma dma2_1(DMA2);
 dma_t dma2_channel1 = &dma2_1;
-void DMA2_Channel1_IRQHandler(void){
+__WEAK void DMA2_Channel1_IRQHandler(void){
 	DMA_IRQ_Handler(DMA2, DMA2_Channel1, dma2_channel1);
 }
 #endif /* DMA2_Channel1 */
 #if defined(DMA2_Channel2)
 dma dma2_2(DMA2);
 dma_t dma2_channel2 = &dma2_2;
-void DMA2_Channel2_IRQHandler(void){
+__WEAK void DMA2_Channel2_IRQHandler(void){
 	DMA_IRQ_Handler(DMA2, DMA2_Channel2, dma2_channel2);
 }
 #endif /* DMA2_Channel2 */
 #if defined(DMA2_Channel3)
 dma dma2_3(DMA2);
 dma_t dma2_channel3 = &dma2_3;
-void DMA2_Channel3_IRQHandler(void){
+__WEAK void DMA2_Channel3_IRQHandler(void){
 	DMA_IRQ_Handler(DMA2, DMA2_Channel3, dma2_channel3);
 }
 #endif /* DMA2_Channel3 */
 #if defined(DMA2_Channel4)
 dma dma2_4(DMA2);
 dma_t dma2_channel4 = &dma2_4;
-void DMA2_Channel4_IRQHandler(void){
+__WEAK void DMA2_Channel4_IRQHandler(void){
 	DMA_IRQ_Handler(DMA2, DMA2_Channel4, dma2_channel4);
 }
 #endif /* DMA2_Channel4 */
 #if defined(DMA2_Channel5)
 dma dma2_5(DMA2);
 dma_t dma2_channel5 = &dma2_5;
-void DMA2_Channel5_IRQHandler(void){
+__WEAK void DMA2_Channel5_IRQHandler(void){
 	DMA_IRQ_Handler(DMA2, DMA2_Channel5, dma2_channel5);
 }
 #endif /* DMA2_Channel5 */
 #if defined(DMA2_Channel6)
 dma dma2_6(DMA2);
 dma_t dma2_channel6 = &dma2_6;
-void DMA2_Channel6_IRQHandler(void){
+__WEAK void DMA2_Channel6_IRQHandler(void){
 	DMA_IRQ_Handler(DMA2, DMA2_Channel6, dma2_channel6);
 }
 #endif /* DMA2_Channel6 */
 #if defined(DMA2_Channel7)
 dma dma2_7(DMA2);
 dma_t dma2_channel7 = &dma2_7;
-void DMA2_Channel7_IRQHandler(void){
+__WEAK void DMA2_Channel7_IRQHandler(void){
 	DMA_IRQ_Handler(DMA2, DMA2_Channel7, dma2_channel7);
 }
 #endif /* DMA2_Channel4 */
@@ -624,35 +624,35 @@ void DMA2_Channel7_IRQHandler(void){
 #if defined(DMA1_Stream0)
 dma dma1_0(DMA1);
 dma_t dma1_stream0 = &dma1_0;
-void DMA1_Stream0_IRQHandler(void){
+__WEAK void DMA1_Stream0_IRQHandler(void){
 	DMA_IRQ_Handler(DMA1, DMA1_Stream0, &dma1_0);
 }
 #endif /* defined(DMA1_Stream0) */
 #if defined(DMA1_Stream1)
 dma dma1_1(DMA1);
 dma_t dma1_stream1 = &dma1_1;
-void DMA1_Stream1_IRQHandler(void){
+__WEAK void DMA1_Stream1_IRQHandler(void){
 	DMA_IRQ_Handler(DMA1, DMA1_Stream1, &dma1_1);
 }
 #endif /* defined(DMA1_Stream1) */
 #if defined(DMA1_Stream2)
 dma dma1_2(DMA1);
 dma_t dma1_stream2 = &dma1_2;
-void DMA1_Stream2_IRQHandler(void){
+__WEAK void DMA1_Stream2_IRQHandler(void){
 	DMA_IRQ_Handler(DMA1, DMA1_Stream2, &dma1_2);
 }
 #endif /* defined(DMA1_Stream2) */
 #if defined(DMA1_Stream3)
 dma dma1_3(DMA1);
 dma_t dma1_stream3 = &dma1_3;
-void DMA1_Stream3_IRQHandler(void){
+__WEAK void DMA1_Stream3_IRQHandler(void){
 	DMA_IRQ_Handler(DMA1, DMA1_Stream3, &dma1_3);
 }
 #endif /* defined(DMA1_Stream3) */
 #if defined(DMA1_Stream4)
 dma dma1_4(DMA1);
 dma_t dma1_stream4 = &dma1_4;
-void DMA1_Stream4_IRQHandler(void){
+__WEAK void DMA1_Stream4_IRQHandler(void){
 	DMA_IRQ_Handler(DMA1, DMA1_Stream4, &dma1_4);
 
 }
@@ -660,21 +660,21 @@ void DMA1_Stream4_IRQHandler(void){
 #if defined(DMA1_Stream5)
 dma dma1_5(DMA1);
 dma_t dma1_stream5 = &dma1_5;
-void DMA1_Stream5_IRQHandler(void){
+__WEAK void DMA1_Stream5_IRQHandler(void){
 	DMA_IRQ_Handler(DMA1, DMA1_Stream5, &dma1_5);
 }
 #endif /* defined(DMA1_Stream5) */
 #if defined(DMA1_Stream6)
 dma dma1_6(DMA1);
 dma_t dma1_stream6 = &dma1_6;
-void DMA1_Stream6_IRQHandler(void){
+__WEAK void DMA1_Stream6_IRQHandler(void){
 	DMA_IRQ_Handler(DMA1, DMA1_Stream6, &dma1_6);
 }
 #endif /* defined(DMA1_Stream6) */
 #if defined(DMA1_Stream7)
 dma dma1_7(DMA1);
 dma_t dma1_stream7 = &dma1_7;
-void DMA1_Stream7_IRQHandler(void){
+__WEAK void DMA1_Stream7_IRQHandler(void){
 	DMA_IRQ_Handler(DMA1, DMA1_Stream7, &dma1_7);
 }
 #endif /* defined(DMA1_Stream7) */
@@ -687,56 +687,56 @@ void DMA1_Stream7_IRQHandler(void){
 #if defined(DMA2_Stream0)
 dma dma2_0(DMA2);
 dma_t dma2_stream0 = &dma2_0;
-void DMA2_Stream0_IRQHandler(void){
+__WEAK void DMA2_Stream0_IRQHandler(void){
 	DMA_IRQ_Handler(DMA2, DMA2_Stream0, &dma2_0);
 }
 #endif /* defined(DMA2_Stream0) */
 #if defined(DMA2_Stream1)
 dma dma2_1(DMA2);
 dma_t dma2_stream1 = &dma2_1;
-void DMA2_Stream1_IRQHandler(void){
+__WEAK void DMA2_Stream1_IRQHandler(void){
 	DMA_IRQ_Handler(DMA2, DMA2_Stream1, &dma2_1);
 }
 #endif /* defined(DMA2_Stream1) */
 #if defined(DMA2_Stream2)
 dma dma2_2(DMA2);
 dma_t dma2_stream2 = &dma2_2;
-void DMA2_Stream2_IRQHandler(void){
+__WEAK void DMA2_Stream2_IRQHandler(void){
 	DMA_IRQ_Handler(DMA2, DMA2_Stream2, &dma2_2);
 }
 #endif /* defined(DMA2_Stream2) */
 #if defined(DMA2_Stream3)
 dma dma2_3(DMA2);
 dma_t dma2_stream3 = &dma2_3;
-void DMA2_Stream3_IRQHandler(void){
+__WEAK void DMA2_Stream3_IRQHandler(void){
 	DMA_IRQ_Handler(DMA2, DMA2_Stream3, &dma2_3);
 }
 #endif /* defined(DMA2_Stream3) */
 #if defined(DMA2_Stream4)
 dma dma2_4(DMA2);
 dma_t dma2_stream4 = &dma2_4;
-void DMA2_Stream4_IRQHandler(void){
+__WEAK void DMA2_Stream4_IRQHandler(void){
 	DMA_IRQ_Handler(DMA2, DMA2_Stream4, &dma2_4);
 }
 #endif /* defined(DMA2_Stream4) */
 #if defined(DMA2_Stream5)
 dma dma2_5(DMA2);
 dma_t dma2_stream5 = &dma2_5;
-void DMA2_Stream5_IRQHandler(void){
+__WEAK void DMA2_Stream5_IRQHandler(void){
 	DMA_IRQ_Handler(DMA2, DMA2_Stream5, &dma2_5);
 }
 #endif /* defined(DMA2_Stream5) */
 #if defined(DMA2_Stream6)
 dma dma2_6(DMA2);
 dma_t dma2_stream6 = &dma2_6;
-void DMA2_Stream6_IRQHandler(void){
+__WEAK void DMA2_Stream6_IRQHandler(void){
 	DMA_IRQ_Handler(DMA2, DMA2_Stream6, &dma2_6);
 }
 #endif /* defined(DMA2_Stream6) */
 #if defined(DMA2_Stream7)
 dma dma2_7(DMA2);
 dma_t dma2_stream7 = &dma2_7;
-void DMA2_Stream7_IRQHandler(void){
+__WEAK void DMA2_Stream7_IRQHandler(void){
 	DMA_IRQ_Handler(DMA2, DMA2_Stream7, &dma2_7);
 }
 #endif /* defined(DMA2_Stream7) */

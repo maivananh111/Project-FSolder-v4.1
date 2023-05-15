@@ -78,7 +78,7 @@ typedef enum{
 	DMA_TRANSFER_COMPLETE_INTERRUPT = DMA_CCR_TCIE,
 	DMA_HALF_TRANSFER_INTERRUPT     = DMA_CCR_HTIE,
 	DMA_TRANSFER_ERROR_INTERRUPT    = DMA_CCR_TEIE,
-} dma_interruptselect_t;
+} dma_interruptoption_t;
 /** -------------------------------------------------------------------------------------------------- **/
 #elif defined(STM32F4)
 typedef enum{
@@ -86,7 +86,7 @@ typedef enum{
 	DMA_HALF_TRANSFER_INTERRUPT = DMA_SxCR_HTIE,
 	DMA_TRANSFER_ERROR_INTERRUPT = DMA_SxCR_TEIE,
 	DMA_DIRECTMODE_ERROR_INTERRUPT = DMA_SxCR_DMEIE,
-} dma_interruptselect_t;
+} dma_interruptoption_t;
 #endif /* STM32F4 */
 
 typedef enum{
@@ -108,7 +108,7 @@ typedef struct {
 	dma_fifo_t 		      fifo = DMA_NOFIFO;
 	dma_burst_t 		  burst = DMA_BURST_4INCREMENTAL;
 #endif /* STM32F4 */
-	uint32_t 			  interruptselect = DMA_TRANSFER_COMPLETE_INTERRUPT | DMA_HALF_TRANSFER_INTERRUPT | DMA_TRANSFER_ERROR_INTERRUPT;
+	uint32_t 			  interruptoption = DMA_TRANSFER_COMPLETE_INTERRUPT | DMA_HALF_TRANSFER_INTERRUPT | DMA_TRANSFER_ERROR_INTERRUPT;
 	dma_channelpriority_t channelpriority = DMA_CHANNEL_PRIORITY_HIGH;
 	uint32_t 			  interruptpriority = 0;
 } dma_config_t;
@@ -126,7 +126,7 @@ class dma {
 
 		uint16_t get_counter(void);
 
-		stm_ret_t poll_for_tranfer(dma_interruptselect_t PollLevel, uint32_t TimeOut);
+		stm_ret_t poll_for_tranfer(dma_interruptoption_t PollLevel, uint32_t TimeOut);
 
 		dma_config_t *get_config(void);
 

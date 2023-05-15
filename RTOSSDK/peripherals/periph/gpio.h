@@ -138,7 +138,7 @@ typedef struct gpio_config{
 	gpio_outputspeed_t outputspeed = GPIO_Speed_Low;
 	gpio_pullresistor_t pullresister = GPIO_NoPull;
 #if defined(STM32F4)
-	gpio_alternatefunction_t function = 0;
+	gpio_alternatefunction_t function = (gpio_alternatefunction_t)0;
 #endif /* STM32F4 */
 } gpio_config_t;
 

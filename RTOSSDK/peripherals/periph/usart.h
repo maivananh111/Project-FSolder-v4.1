@@ -36,7 +36,7 @@ typedef enum{
 	USART_RECEIVE_INTERRUPT          = 0x01U,
 	USART_TRANSMIT_INTERRUPT         = 0x02U,
 	USART_TRANSMIT_RECEIVE_INTERRUPT = 0x04U,
-} usart_interruptselect_t;
+} usart_interruptoption_t;
 
 typedef enum{
 	USART_EVENT_NOEVENT,
@@ -57,7 +57,7 @@ typedef enum{
 typedef struct{
 	uint32_t 			     baudrate;
 	usart_periph_control_t   control = USART_NORMAL_CONTROL;
-	usart_interruptselect_t  interruptselect = USART_RECEIVE_INTERRUPT;
+	usart_interruptoption_t  interruptoption = USART_RECEIVE_INTERRUPT;
 	uint32_t 			     interruptpriority = 0;
 	GPIO_TypeDef 		     *txport;
 	uint16_t 			     txpin;

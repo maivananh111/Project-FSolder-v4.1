@@ -1,15 +1,15 @@
 /*
- * DS3231.h
+ * ex_rtc.h
  *
  *  Created on: Nov 29, 2022
  *      Author: anh
  */
 
-#ifndef COMPONENTS_DS3231_H_
-#define COMPONENTS_DS3231_H_
+#ifndef COMPONENTS_EX_RTC_H_
+#define COMPONENTS_EX_RTC_H_
 
 #include "component_config.h"
-#if ENABLE_COMPONENT_DS3231
+#if ENABLE_COMPONENT_EX_RTC
 
 #ifdef __cplusplus
 extern "C"{
@@ -31,13 +31,13 @@ typedef struct {
 	uint8_t dayofmonth;
 	uint8_t month;
 	uint8_t year;
-} DS3231_Time_t;
+} rtc_time_t;
 
 
 void DS3231_Init(i2c_t i2c);
 
-void DS3231_SetTime(DS3231_Time_t time);
-void DS3231_GetTime(DS3231_Time_t *time);
+void DS3231_SetTime(rtc_time_t time);
+void DS3231_GetTime(rtc_time_t *time);
 
 float DS3231_GetTemp(void);
 
@@ -46,6 +46,6 @@ float DS3231_GetTemp(void);
 }
 #endif
 
-#endif /* ENABLE_COMPONENT_SPIFLASH */
+#endif /* ENABLE_COMPONENT_EX_RTC */
 
-#endif /* COMPONENTS_DS3231_H_ */
+#endif /* COMPONENTS_EX_RTC_H_ */

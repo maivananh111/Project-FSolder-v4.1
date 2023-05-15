@@ -1,14 +1,14 @@
 /*
- * DS3231.cpp
+ * ex_rtc.cpp
  *
  *  Created on: Nov 29, 2022
  *      Author: anh
  */
 
 #include "component_config.h"
-#if ENABLE_COMPONENT_DS3231
+#if ENABLE_COMPONENT_EX_RTC
 
-#include "periph/ds3231.h"
+#include "ex_rtc/ex_rtc.h"
 
 
 
@@ -37,7 +37,7 @@ void DS3231_Init(i2c_t i2c){
 	DS3231_Temp_Conv();
 }
 
-void DS3231_SetTime(DS3231_Time_t time){
+void DS3231_SetTime(rtc_time_t time){
 	uint8_t set_time[7];
 	set_time[0] = decToBcd(time.seconds );
 	set_time[1] = decToBcd(time.minutes);
@@ -50,7 +50,7 @@ void DS3231_SetTime(DS3231_Time_t time){
 	_i2c -> i2c_write_register(DS3231_ADDRESS, 0x00, 1, set_time, 7);
 }
 
-void DS3231_GetTime(DS3231_Time_t *time){
+void DS3231_GetTime(rtc_time_t *time){
 	uint8_t get_time[7];
 
 	_i2c -> i2c_read_register(DS3231_ADDRESS, 0x00, 1, get_time, 7);
@@ -71,5 +71,5 @@ float DS3231_GetTemp(void){
 	return (float)(temp[0] + (temp[1]>>6)/4.0);
 }
 
-#endif /* ENABLE_COMPONENT_SPIFLASH */
+#endif /* ENABLE_COMPONENT_EX_RTC */
 

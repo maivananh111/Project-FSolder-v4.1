@@ -75,6 +75,7 @@ class TFTSPI_ST7735{
 
 		void draw_pixel(uint16_t x, uint16_t y, uint16_t color);
 		void draw_line(uint16_t X1, uint16_t Y1, uint16_t X2, uint16_t Y2, uint16_t color);
+		void draw_rect(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color);
 
 		void draw_rgb_bitmap(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint16_t* Bitmap);
 		void draw_MkE_bitmap(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t Color, uint16_t B_Color, const uint8_t* Bitmap);

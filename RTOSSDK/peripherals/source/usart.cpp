@@ -356,7 +356,7 @@ stm_ret_t usart::transmit_start_it(uint8_t *data, uint16_t len){
 	stm_ret_t ret;
 
 	if(_conf -> control && (USART_INTERRUPT_CONTROL | USART_INTERRUPT_DMA_CONTROL)) {
-		if(_conf -> interruptselect && (USART_TRANSMIT_INTERRUPT | USART_TRANSMIT_RECEIVE_INTERRUPT))
+		if(_conf -> interruptoption && (USART_TRANSMIT_INTERRUPT | USART_TRANSMIT_RECEIVE_INTERRUPT))
 			_usart -> CR1 |= USART_CR1_TCIE;
 		else {
 #if CONFIG_USE_LOG_MONITOR && USART_LOG
@@ -409,7 +409,7 @@ stm_ret_t usart::receive_start_it(uint16_t buffer_size){
 	stm_ret_t ret;
 
 	if(_conf -> control && (USART_INTERRUPT_CONTROL | USART_INTERRUPT_DMA_CONTROL)) {
-		if(_conf -> interruptselect && (USART_RECEIVE_INTERRUPT | USART_TRANSMIT_RECEIVE_INTERRUPT))
+		if(_conf -> interruptoption && (USART_RECEIVE_INTERRUPT | USART_TRANSMIT_RECEIVE_INTERRUPT))
 			_usart -> CR1 |= USART_CR1_RXNEIE;
 		else {
 #if CONFIG_USE_LOG_MONITOR && USART_LOG
@@ -458,7 +458,7 @@ stm_ret_t usart::transmit_stop_it(void){
 	stm_ret_t ret;
 
 	if(_conf -> control && (USART_INTERRUPT_CONTROL | USART_INTERRUPT_DMA_CONTROL)) {
-		if((_conf -> interruptselect && (USART_TRANSMIT_INTERRUPT | USART_TRANSMIT_RECEIVE_INTERRUPT))\
+		if((_conf -> interruptoption && (USART_TRANSMIT_INTERRUPT | USART_TRANSMIT_RECEIVE_INTERRUPT))\
 				&& (_usart -> CR1 & USART_CR1_TCIE)){
 
 			_usart -> CR1 &=~ USART_CR1_TCIE;
@@ -487,7 +487,7 @@ stm_ret_t usart::receive_stop_it(void){
 	stm_ret_t ret;
 
 	if(_conf -> control && (USART_INTERRUPT_CONTROL | USART_INTERRUPT_DMA_CONTROL)) {
-		if((_conf -> interruptselect && (USART_RECEIVE_INTERRUPT | USART_TRANSMIT_RECEIVE_INTERRUPT))\
+		if((_conf -> interruptoption && (USART_RECEIVE_INTERRUPT | USART_TRANSMIT_RECEIVE_INTERRUPT))\
 					&& (_usart -> CR1 & USART_CR1_RXNEIE)){
 
 			_usart -> CR1 &=~ USART_CR1_RXNEIE;

@@ -229,7 +229,9 @@ void gpio_set_mode(GPIO_TypeDef *port, uint16_t pin, gpio_mode_t mode){
 				break;
 			}
 		}
-
+		else if(mode == GPIO_ANALOG){
+			port -> CRL |= (0x0FUL << ((pin-8)*4));
+		}
 		else { // OUTPUT.
 			port -> CRL |= ((GPIO_OUTPUTSPEED_DEFAULT+1) << pin*4);// SET MODE OUTPUT HIGH SPEED.
 
@@ -263,7 +265,9 @@ void gpio_set_mode(GPIO_TypeDef *port, uint16_t pin, gpio_mode_t mode){
 				break;
 			}
 		}
-
+		else if(mode == GPIO_ANALOG){
+			port -> CRH |= (0x0FUL << ((pin-8)*4));
+		}
 		else { // OUTPUT.
 			port -> CRH |= ((GPIO_OUTPUTSPEED_DEFAULT+1) << (pin-8)*4);// SET MODE OUTPUT HIGH SPEED.
 
@@ -391,10 +395,11 @@ void gpio_set_alternatefunction_type(GPIO_TypeDef *port, uint16_t pin, gpio_mode
  *
  * @param remap gpio alternate function remap.
  */
+#if defined(STM32F1)
 void gpio_remap(gpio_remap_t remap){
 	AFIO -> MAPR |= remap;
 }
-
+#endif /* STM32F1 */
 /**
  * @fn void gpio_set_pullup(GPIO_TypeDef*, uint16_t)
  * @brief Set pullup resistor for gpio pin.
@@ -495,7 +500,7 @@ void gpio_set_level(GPIO_TypeDef *port, uint16_t pin, int level){
  * @return Level of gpio pin.
  */
 int gpio_get_level(GPIO_TypeDef *port, uint16_t pin){
-	return (port -> IDR >> pin) & 1UL;
+	return (port -> IDR >> pin) & 0x1UL;
 }
 
 

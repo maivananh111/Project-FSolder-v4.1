@@ -309,13 +309,13 @@ void TFTSPI_ST7735::fill_rectangle(uint16_t x, uint16_t y, uint16_t w, uint16_t 
 
 void TFTSPI_ST7735::fill_screen(uint16_t color) {
 	uint8_t *disp_buf;
-	disp_buf = (uint8_t *)malloc(32*128*2 * sizeof(uint8_t));
-	for(int i=0; i<32*128; i++){
+	disp_buf = (uint8_t *)malloc(16*128*2 * sizeof(uint8_t));
+	for(int i=0; i<16*128; i++){
 		disp_buf[i*2]   = (uint8_t)(color >> 8);
 		disp_buf[i*2+1] = (uint8_t)(color & 0xFF);
 	}
-	dma_tft_cnt = 5;
-	write_color(0, 0, width-1, height-1, disp_buf, 32*128*2);
+	dma_tft_cnt = 10;
+	write_color(0, 0, width-1, height-1, disp_buf, 16*128*2);
 	free(disp_buf);
 }
 
@@ -368,6 +368,13 @@ void TFTSPI_ST7735::draw_line(uint16_t X1, uint16_t Y1, uint16_t X2, uint16_t Y2
 		}
 	}
 	draw_pixel(X1,Y1,color);
+}
+
+void TFTSPI_ST7735::draw_rect(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color) {
+		fill_rectangle(x, y, w, 1, color);
+		fill_rectangle(x, y+h-1, w, 1, color);
+		fill_rectangle(x, y, 1, h, color);
+		fill_rectangle(x+w-1, y, 1, h, color);
 }
 
 void TFTSPI_ST7735::draw_rgb_bitmap(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint16_t* Bitmap) {

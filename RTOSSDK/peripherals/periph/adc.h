@@ -23,19 +23,23 @@ extern "C"{
 #include "periph/dma.h"
 #endif /* ENABLE_DMA */
 
-typedef enum{
-	ADC_PRESCALER_2 = 0,
-	ADC_PRESCALER_4 = ADC_CCR_ADCPRE_0,
-	ADC_PRESCALER_6 = ADC_CCR_ADCPRE_1,
-	ADC_PRESCALER_8 = ADC_CCR_ADCPRE,
-} adc_prescaler_t;
+#if defined(STM32F1)
 
+#elif defined(STM32F4)
 typedef enum{
 	ADC_RESOLUTION_12BITS = 0,
 	ADC_RESOLUTION_10BITS = ADC_CR1_RES_0,
 	ADC_RESOLUTION_8BITS  = ADC_CR1_RES_1,
 	ADC_RESOLUTION_6BITS  = ADC_CR1_RES,
 } adc_resolution_t;
+#endif /* STM32F4 */
+
+typedef enum{
+	ADC_PRESCALER_2 = 0,
+	ADC_PRESCALER_4,
+	ADC_PRESCALER_6,
+	ADC_PRESCALER_8,
+} adc_prescaler_t;
 
 typedef enum{
 	ADC_DATAALIGN_RIGHT = 0,
@@ -71,7 +75,9 @@ typedef enum{
 
 typedef struct{
 	adc_prescaler_t prescaler = ADC_PRESCALER_4;
+#if defined(STM32F4)
 	adc_resolution_t resolution = ADC_RESOLUTION_12BITS;
+#endif /* STM32F4 */
 	adc_dataalign_t dataalign = ADC_DATAALIGN_RIGHT;
 	adc_continuosmode_t continuos = ADC_CONTINUOS_DISABLE;
 	GPIO_TypeDef **port_list;
@@ -89,7 +95,7 @@ class adc{
 		adc(ADC_TypeDef *adc);
 		stm_ret_t init(adc_config_t *conf);
 
-		void start(uint16_t *data);
+		void start(void);
 		void stop(void);
 
 		void start_it(uint16_t *data);
@@ -111,6 +117,15 @@ typedef adc* adc_t;
 
 void ADC_IRQHandler(adc *adc);
 
+#if defined(ADC1) && defined(ADC2)
+extern adc_t adc1;
+extern adc_t adc2;
+void ADC1_2_IRQHandler(void);
+#endif /* ADC1 && ADC2 */
+#if defined(ADC3)
+extern adc_t adc3;
+void ADC3_IRQHandler(void);
+#endif /* ADC1 */
 
 #ifdef __cplusplus
 }

@@ -43,7 +43,7 @@ typedef enum{
 	SPI_RECEIVE_INTERRUPT,
 	SPI_TRANSMIT_INTERRUPT,
 	SPI_TRANSMIT_RECEIVE_INTERRUPT,
-} spi_interruptselect_t;
+} spi_interruptoption_t;
 
 typedef enum{
 	SPI_DATASIZE_8BIT = 0U,
@@ -95,7 +95,7 @@ typedef enum{
 typedef struct {
 	spi_mode_t 			  mode              = SPI_FULLDUPLEX_MASTER;
 	spi_periph_control_t  control           = SPI_NORMAL_CONTROL;
-	spi_interruptselect_t interruptselect   = SPI_RECEIVE_INTERRUPT;
+	spi_interruptoption_t interruptoption   = SPI_RECEIVE_INTERRUPT;
 	spi_datasize_t 		  datasize          = SPI_DATASIZE_8BIT;
 	spi_bitodering_t 	  bitordering  	    = SPI_BITORDERING_MSB;
 	spi_clockdivision_t   clockdivision     = SPI_CLOCKDIVISION_4;

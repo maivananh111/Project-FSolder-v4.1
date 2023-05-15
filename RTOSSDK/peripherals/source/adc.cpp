@@ -43,12 +43,7 @@ stm_ret_t adc::init(adc_config_t *conf){
 
 	/* ADC PRESCALER DIVISION */
 #if defined(STM32F1)
-	__IO uint32_t adc_pres = ceil((float)rcc_get_bus_frequency(APB2)/14000000.0);
-	if(adc_pres > 8U) adc_pres = 8U;
-	if(adc_pres == 0U) adc_pres = 2U;
-	if(adc_pres % 2 != 0U && adc_pres != 0U) adc_pres += 1;
-	adc_pres = (adc_pres >> 1U) - 1;
-	RCC -> CFGR |= (adc_pres << RCC_CFGR_ADCPRE_Pos);
+	RCC -> CFGR |= (_conf->prescaler << RCC_CFGR_ADCPRE_Pos);
 #elif defined(STM32F4)
 	ADC123_COMMON -> CCR &=~ ADC_CCR_ADCPRE;
 	ADC123_COMMON -> CCR |= _conf -> prescaler;
@@ -59,15 +54,21 @@ stm_ret_t adc::init(adc_config_t *conf){
 	if(sizeof(_conf -> pin_list) > 1)
 		_adc -> CR1 |= ADC_CR1_SCAN;   // ADC SCAN MODE.
 
+#if defined(STM32F4)
 	_adc -> CR1 &=~ ADC_CR1_RES;
 	_adc -> CR1 |= _conf -> resolution; // ADC RESOLUTION.
+#endif /* STM32F4 */
 
 	_adc -> CR2 &=~ ADC_CR2_ALIGN; // ADC DATA ALIGN RIGHT.
 	if(_conf -> dataalign == ADC_DATAALIGN_LEFT)
 		_adc -> CR2 |= ADC_CR2_ALIGN;
 
+#if defined(STM32F1)
+	_adc -> CR2 |= ADC_CR2_EXTSEL; // ADC START BY SWSTART
+#elif defined(STM32F4)
 	_adc -> CR2 &=~ ADC_CR2_EXTSEL; // ADC SELECT SOFTWARE START.
 	_adc -> CR2 &=~ ADC_CR2_EXTEN;  // ADC DISABLE EXTERNAL TRIGER START.
+#endif /* STM32F4 */
 
 	_adc -> CR2 &=~ ADC_CR2_CONT;
 	_adc -> CR2 |= _conf -> continuos; // ADC CONTINUOUS MODE ENABLE.
@@ -101,67 +102,101 @@ stm_ret_t adc::init(adc_config_t *conf){
 
 	_adc -> SQR1 |= ((_conf -> num_channel - (uint8_t)1) << ADC_SQR1_L_Pos); // ADC NUMBER OF CONVERSION SEQUENCE
 
-//	if(_conf -> adc_temp_vref == true) _adc -> CR2 |= ADC_CR2_TSVREFE;
-
 	_adc -> CR2 |= ADC_CR2_ADON; // TURN ON ADC AND TO START CONVERSION
-}
-/*
-void ADC_Start(ADC_TypeDef *ADC){
-	ADC -> CR2 |= ADC_CR2_ADON; // ENABLE ADC
-	ADC -> SR = 0; // CLEAR ADC STATUS REGISTER
-	ADC -> CR2 |= ADC_CR2_EXTTRIG; // ENABLE ADC START BY EXTERNAL TRIGER
-	ADC -> CR2 |= ADC_CR2_SWSTART; // START ADC
+
+	return ret;
 }
 
-void ADC_Stop(ADC_TypeDef *ADC){
-	ADC -> CR2 &=~ ADC_CR2_ADON; // DISABLE ADC
-	ADC -> CR2 &=~ ADC_CR2_EXTTRIG; // DISABLE ADC START BY EXTERNAL TRIGER
-	ADC -> CR2 &=~ ADC_CR2_SWSTART; // STOP ADC
+void adc::start(void){
+	_adc -> CR2 |= ADC_CR2_ADON; // ENABLE ADC.
+	_adc -> SR = 0; 				// CLEAR ADC STATUS REGISTER.
+#if defined(STM32F1)
+	_adc -> CR2 |= ADC_CR2_EXTTRIG; // ENABLE ADC START BY EXTERNAL TRIGER.
+#endif /* STM32F1 */
+	_adc -> CR2 |= ADC_CR2_SWSTART; // START ADC BY SOFTWARE START.
 }
 
-uint16_t ADC_Read(ADC_TypeDef *ADC){
-	return ADC -> DR;
+void adc::stop(void){
+	_adc -> CR2 &=~ ADC_CR2_ADON; // DISABLE ADC
+#if defined(STM32F1)
+	_adc -> CR2 &=~ ADC_CR2_EXTTRIG; // DISABLE ADC START BY EXTERNAL TRIGER
+#endif /* STM32F1 */
+	_adc -> CR2 &=~ ADC_CR2_SWSTART; // STOP ADC
 }
 
-Result_t ADC_Start_DMA(ADC_TypeDef *ADC, DMA dma, uint16_t *adc_data, uint16_t num_channel){
-	Result_t res = {
-		.Status = OKE,
-		.CodeLine = 0,
-	};
-	ADC -> CR2 |= ADC_CR2_DMA; // ENABLE ADC DMA
-	res = dma.Start((uint32_t)&ADC -> DR, (uint32_t)adc_data,  num_channel); // SETUP DMA
-	if(res.Status != OKE){
-		res.CodeLine = __LINE__;
-		return res;
+uint16_t adc::get_value(void){
+	return _adc -> DR;
+}
+
+stm_ret_t adc::start_dma(uint16_t *data, uint16_t num_channel){
+	stm_ret_t ret;
+
+	_adc -> CR2 |= ADC_CR2_DMA; // ENABLE ADC DMA
+
+	ret = _conf->dma->start((uint32_t)&_adc -> DR, (uint32_t)data,  num_channel); // SETUP DMA
+	if(!is_oke(&ret)){
+		set_return_line(&ret, __LINE__);
+		return ret;
 	}
-	ADC -> SR = 0; // CLEAR ADC STATUS REGISTER
-	ADC -> CR2 |= ADC_CR2_EXTTRIG; // ENABLE ADC START BY EXTERNAL TRIGER
-	ADC -> CR2 |= ADC_CR2_SWSTART; // START ADC
 
-	return res;
+	_adc -> SR = 0; // CLEAR ADC STATUS REGISTER
+#if defined(STM32F1)
+	_adc -> CR2 |= ADC_CR2_EXTTRIG; // ENABLE ADC START BY EXTERNAL TRIGER.
+#endif /* STM32F1 */
+	_adc -> CR2 |= ADC_CR2_SWSTART; // START ADC
+
+	return ret;
 }
 
-Result_t ADC_Stop_DMA(ADC_TypeDef *ADC, DMA dma){
-	Result_t res = {
-		.Status = OKE,
-		.CodeLine = 0,
-	};
-	ADC -> CR2 &=~ ADC_CR2_DMA; // DISABLE ADC DMA
-	res = dma.Stop(); // STOP DMA
-	if(res.Status != OKE){
-		res.CodeLine = __LINE__;
-		return res;
+stm_ret_t adc::stop_dma(void){
+	stm_ret_t ret;
+
+	if(_adc -> CR2 & ADC_CR2_DMA){
+		set_return_line(&ret, __LINE__);
+		return ret;
 	}
-	ADC -> CR2 &=~ ADC_CR2_EXTTRIG;
-	ADC -> CR2 &=~ ADC_CR2_SWSTART; // STOP ADC
 
-	return res;
+	_adc -> CR2 &=~ ADC_CR2_DMA; // DISABLE ADC DMA
+
+	ret = _conf->dma->stop(); // STOP DMA
+	if(!is_oke(&ret)){
+		set_return_line(&ret, __LINE__);
+		return ret;
+	}
+
+#if defined(STM32F1)
+	_adc -> CR2 &=~ ADC_CR2_EXTTRIG; // DISABLE ADC START BY EXTERNAL TRIGER
+#endif /* STM32F1 */
+	_adc -> CR2 &=~ ADC_CR2_SWSTART; // STOP ADC
+
+	return ret;
 }
 
-float Internal_TemperatureSensor(ADC_TypeDef *ADC, uint16_t ITempSS_Data){
-	return (float)((1.43 - ((3.3/4096.0)*(float)ITempSS_Data))/0.0043) + 25.0;
-//	return 357.558 - 0.187364 * ITempSS_Data;
+
+
+void ADC_IRQHandler(adc *adc){
+
 }
-*/
+
+
+#if defined(ADC1) && defined(ADC2)
+adc adc_1(ADC1);
+adc_t adc1 = &adc_1;
+adc adc_2(ADC2);
+adc_t adc2 = &adc_2;
+
+void ADC1_2_IRQHandler(void){
+	ADC_IRQHandler(adc1);
+	ADC_IRQHandler(adc2);
+}
+#endif /* ADC1 && ADC2 */
+#if defined(ADC3)
+adc adc_3(ADC3);
+adc_t adc3;
+void ADC3_IRQHandler(void){
+	ADC_IRQHandler(adc3);
+}
+#endif /* ADC1 */
+
 #endif /* ENABLE_ADC */
 
