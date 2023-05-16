@@ -40,9 +40,9 @@ const uint8_t Degree_Ubuntu16x50[] = {
 		0x00, 0x00, 0x00, 0x00, 0x0E, 0xE0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1E, 0xF0, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFC, 0x7F, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0xFC, 0x7F, 0x00, 0x00, 0x00, 0x00, 0x00, 0xF8, 0x3F, 0x00, 0x00, 0x00, 0x00, 0x00, 0xF0, 0x1F, 0x00, 0x00, 0x00, 0x00, 0x00,};
 
-const char *Header_Screen_Item[] = {"      CÀI ĐẶT       ",
-									"   ĐANG GIA NHIỆT   ",
+const char *Header_Screen_Item[] = {"   ĐANG GIA NHIỆT   ",
 									"     CHẾ ĐỘ NGỦ     ",
+									"      CÀI ĐẶT       ",
 									"  CÀI ĐẶT NHIỆT ĐỘ  ",
 									"  CÀI ĐẶT HỆ THỐNG  ",
 									" CÀI ĐẶT CHẾ ĐỘ NGỦ ",
@@ -97,6 +97,10 @@ const char *Date_Str[]				= {"SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"};
 const char *Session_Str[]			= {"AM", "PM"};
 
 
+main_activite_t gui_main_activite = HEATING;
+
+
+
 
 uint8_t Pre_char_len = 1;
 int8_t Pre_Select = 0;
@@ -111,7 +115,9 @@ int8_t Pre_Select_Pre2 = 0;
 int8_t HighLight_Pre2  = 0;
 int8_t First_Item_Pre2 = 0;
 
-bool theme = false; //False=Light, True=Dark.
+bool theme = true; //False=Light, True=Dark.
+int16_t limit_bottom, limit_top;
+
 
 #define DARK_BG_COLOR        BLACK
 #define DARK_TEXT_COLOR      WHITE
@@ -134,18 +140,34 @@ bool theme = false; //False=Light, True=Dark.
 #define HEADER_COLOR    ((theme)? DARK_HEADER_COLOR :LIGHT_HEADER_COLOR )
 #define HEADER_BG_COLOR ((theme)? DARK_HEADER_BG_COLOR:LIGHT_HEADER_BG_COLOR)
 
-
-int8_t Option_Limit(int8_t Input, int8_t Bottom, int8_t Top);
+void gui_limit_counter(int16_t bottom, int16_t top);
+int8_t Option_Limit(int8_t *Input, int8_t Bottom, int8_t Top);
 int8_t Option_Limit_Invt(int8_t Input, int8_t Bottom, int8_t Top);
 void write_num(uint16_t x, uint16_t y, uint16_t color, uint16_t b_color, uint16_t num);
 void Print_Temperature(uint8_t x, uint8_t y, uint16_t Temperature, bool Unit);
-void Draw_Menu(const char *Item_String[], uint8_t Num_Item, uint8_t Y_Start, int8_t Selecting);
+void Draw_Menu(const char *Item_String[], uint8_t Num_Item, uint8_t Y_Start, int8_t *Selecting);
 void Show_Scr(parameter_t *param, const char *header);
 
-int8_t Option_Limit(int8_t Input, int8_t Bottom, int8_t Top) {
-	if(Input <= Bottom) return Bottom;
-	if (Input >= Top) return Top;
-	return Input;
+void gui_limit_counter(int16_t bottom, int16_t top){
+	limit_bottom = bottom;
+	limit_top = top;
+}
+
+int16_t gui_get_bottom(void){
+	return limit_bottom;
+}
+int16_t gui_get_top(void){
+	return limit_top;
+}
+
+void gui_clear(void){
+	tft.fill_screen(BG_COLOR);
+}
+
+int8_t Option_Limit(int8_t *Input, int8_t Bottom, int8_t Top) {
+	if(*Input <= Bottom) return Bottom;
+	if (*Input >= Top) return Top;
+	return *Input;
 }
 int8_t Option_Limit_Invt(int8_t Input, int8_t Bottom, int8_t Top) {
 	if(Input <= Bottom) return Top;
@@ -239,36 +261,40 @@ void Print_Temperature(uint8_t x, uint8_t y, uint16_t Temperature, bool Unit){
 		tft.draw_MkE_bitmap(D_X+16, y, 36, 50, TEMP_COLOR, BG_COLOR, Ubuntu36x50[11]);
 }
 
-void Draw_Menu(const char *Item_String[], uint8_t Num_Item, uint8_t Y_Start, int8_t Selecting) {
+void Draw_Menu(const char *Item_String[], uint8_t Num_Item, uint8_t Y_Start, int8_t *Selecting) {
 	uint8_t Num_Print = ((128 - Y_Start) / 20) - 1; // 3
 	int8_t brand;
-	int8_t Select = Option_Limit(Selecting, 0, Num_Item);
+	*Selecting = Option_Limit(Selecting, 0, Num_Item);
 
-	if (Select > Pre_Select){
-		brand = Select - Pre_Select;
+	if (*Selecting > Pre_Select){
+		brand = *Selecting - Pre_Select;
 		HighLight += brand;
 		if (HighLight > Num_Print){
 			First_Item += brand;
 		}
-		Pre_Select = Select;
+		Pre_Select = *Selecting;
 	}
-	else if (Select < Pre_Select){
-		brand = Pre_Select - Select;
+	else if (*Selecting < Pre_Select){
+		brand = Pre_Select - *Selecting;
 		HighLight -= brand;
 		if (HighLight < 0){
 			First_Item -= brand;
 		}
-		Pre_Select = Select;
+		Pre_Select = *Selecting;
 	}
-	HighLight = Option_Limit(HighLight, 0, Num_Print);
-	First_Item = Option_Limit(First_Item, 0, Num_Item - Num_Print - 1);
+	Num_Print = Option_Limit((int8_t *)&Num_Print, 0, Num_Item-1);
+	HighLight = Option_Limit(&HighLight, 0, Num_Print);
+	First_Item = Option_Limit(&First_Item, 0, Num_Item - Num_Print - 1);
 
-	tft.fill_rectangle(155, Y_Start, 4, (128 - Y_Start), BG_COLOR);
+	tft.fill_rectangle(155, Y_Start, 1, (128 - Y_Start), BG_COLOR);
+	tft.fill_rectangle(158, Y_Start, 1, (128 - Y_Start), BG_COLOR);
 	tft.fill_rectangle(156, Y_Start, 2, (128 - Y_Start), TEXT_COLOR);
 
 	uint8_t Y = Y_Start + HighLight*20;
 	float Scroll = ((128 - Y_Start)) / (float)Num_Item;
-	tft.fill_rectangle(155, Y_Start + (uint8_t)(Select * Scroll), 4, (uint8_t)Scroll + 2, TEXT_COLOR);
+	uint16_t Y_Scroll = Y_Start + (uint8_t)(*Selecting * Scroll);
+	if(Y_Scroll > (LCD_HEIGHT - (uint8_t)Scroll + 4)) Y_Scroll -= (uint8_t)Scroll + 2;
+	tft.fill_rectangle(155, Y_Scroll, 4, (uint8_t)Scroll + 2, TEXT_COLOR);
 
 	tft.fill_rectangle(0, Y_Start, 1, (128 - Y_Start), BG_COLOR);
 	tft.fill_rectangle(0, Y, 1, 20, TEXT_COLOR);
@@ -285,7 +311,6 @@ void Draw_Menu(const char *Item_String[], uint8_t Num_Item, uint8_t Y_Start, int
 		tft.print(1, Y_Start + i*20, Viet_Terminal8x20, Color, B_Color, (char *)item_Buf);
 	}
 }
-
 
 void Show_Scr(parameter_t *param, const char *header){
 	char Main_Buf[10];
@@ -305,9 +330,9 @@ void Show_Scr(parameter_t *param, const char *header){
 	tft.print(84, 40, Viet_Terminal8x20, TEXT_COLOR, BG_COLOR, (char *)Main_Buf);
 
 ///* Hàng 1 */
-	sprintf(Main_Buf, "%02d:%02d:%02d", param->time.hour, param->time.minutes, param->time.seconds);
+	sprintf(Main_Buf, "%02d:%02d:%02d ", param->time.hour, param->time.minutes, param->time.seconds);
 	tft.print(4, 22, Viet_Terminal8x20, TEXT_COLOR, BG_COLOR, (char *)Main_Buf);
-	sprintf(Main_Buf, "%02d/%02d/%02d", param->time.dayofmonth, param->time.month, param->time.year);
+	sprintf(Main_Buf, "%02d/%02d/0%02d", param->time.dayofmonth, param->time.month, param->time.year);
 	tft.print(84, 22, Viet_Terminal8x20, TEXT_COLOR, BG_COLOR, (char *)Main_Buf);
 
 ///* Header */
@@ -326,11 +351,20 @@ void Show_Scr(parameter_t *param, const char *header){
 }
 
 void Heating_Scr(parameter_t *param){
-	Show_Scr(param, Header_Screen_Item[1]);
+	Show_Scr(param, Header_Screen_Item[0]);
 }
 
 void Sleeping_Scr(parameter_t *param){
-	Show_Scr(param, Header_Screen_Item[2]);
+	Show_Scr(param, Header_Screen_Item[1]);
+}
+
+void Menu_Setting_Scr(int8_t *Selecting){
+///* Header */
+	tft.print(0, 0, Viet_Terminal8x20, HEADER_COLOR, HEADER_BG_COLOR, (char *)Header_Screen_Item[2]);
+	tft.fill_rectangle(0, 20, LCD_WIDTH, 2, HEADER_BG_COLOR);
+
+	gui_limit_counter(0, 8);
+	Draw_Menu(Menu_Scr_Item, 9, 22, Selecting);
 }
 
 void Temp_Set_Scr(parameter_t *param){
@@ -340,7 +374,7 @@ void Temp_Set_Scr(parameter_t *param){
 	tft.print(0, 0, Viet_Terminal8x20, HEADER_COLOR, HEADER_BG_COLOR, (char *)Header_Screen_Item[3]);
 	tft.fill_rectangle(0, 20, LCD_WIDTH, 2, HEADER_BG_COLOR);
 
-	Print_Temperature(0, 30, param->temp, param->unit);
+	Print_Temperature(0, 30, param->tempset, param->unit);
 
 	(param->unit)? sprintf(Main_Buf, "Hiện tại: %3d@F     ", param->temp): sprintf(Main_Buf, "Hiện tại: %3d@C     ", param->temp);
 	tft.print(0, 80, Viet_Terminal8x20, TEXT_COLOR, BG_COLOR, (char *)Main_Buf);
@@ -348,120 +382,72 @@ void Temp_Set_Scr(parameter_t *param){
 	tft.print(0, 108, Viet_Terminal8x20, TEXT_COLOR, BG_COLOR, (char *)"Nhấn để lưu và thoát");
 }
 
-void Menu_Setting_Scr(int8_t Selecting){
-///* Header */
-	tft.print(0, 0, Viet_Terminal8x20, HEADER_COLOR, HEADER_BG_COLOR, (char *)Header_Screen_Item[0]);
-	tft.fill_rectangle(0, 20, LCD_WIDTH, 2, HEADER_BG_COLOR);
-
-	Draw_Menu(Menu_Scr_Item, 9, 22, Selecting);
-}
-
-void Menu_System_Scr(int8_t Selecting){
+void Menu_System_Scr(int8_t *Selecting){
 	///* Header */
-	tft.print(0, 0, Viet_Terminal8x20, HEADER_COLOR, HEADER_BG_COLOR, (char *)Header_Screen_Item[0]);
+	tft.print(0, 0, Viet_Terminal8x20, HEADER_COLOR, HEADER_BG_COLOR, (char *)Header_Screen_Item[4]);
 	tft.fill_rectangle(0, 20, LCD_WIDTH, 2, HEADER_BG_COLOR);
 
-	Draw_Menu(Menu_Scr_Item, 9, 22, Selecting);
+	gui_limit_counter(0, 4);
+	Draw_Menu(System_Scr_Item, 5, 22, Selecting);
 }
 
-//void Menu_Sleep_Scr(int8_t Selecting){
-//	if(Disp_Color == false) lcd.fillScreen(true);
+void Menu_Sleep_Scr(int8_t *Selecting){
+	///* Header */
+	tft.print(0, 0, Viet_Terminal8x20, HEADER_COLOR, HEADER_BG_COLOR, (char *)Header_Screen_Item[5]);
+	tft.fill_rectangle(0, 20, LCD_WIDTH, 2, HEADER_BG_COLOR);
+
+	gui_limit_counter(0, 3);
+	Draw_Menu(Sleep_Scr_Item, 4, 22, Selecting);
+}
 //
-//	lcd.print(28, 2, 8, 12, Terminal8x12, Disp_Color, (char *)"SLEEP");
-//	lcd.drawRect(10, 1, 76, 13, Disp_Color);
-//
-//	Draw_Menu(Sleep_Scr_Item, 4, 16, Selecting);
-//}
-//
-//void Menu_Calib_Scr(int8_t Selecting){
-//	if(Disp_Color == false) lcd.fillScreen(true);
-//
-//	lcd.print(4, 2, 8, 12, Terminal8x12, Disp_Color, (char *)"CALIBRATION");
-//	lcd.drawRect(2, 1, 92, 13, Disp_Color);
-//
-//	Draw_Menu(Calib_Scr_Item, 6, 16, Selecting);
-//}
-//
-//void Menu_Parameter_Scr(int8_t Selecting){
-//	if(Disp_Color == false) lcd.fillScreen(true);
-//
-//	lcd.print(12, 2, 8, 12, Terminal8x12, Disp_Color, (char *)"PARAMETER");
-//	lcd.drawRect(10, 1, 76, 13, Disp_Color);
-//
-//	Draw_Menu(Parameter_Scr_Item, 5, 16, Selecting);
-//}
-//
-//void Menu_PID_Scr(int8_t Selecting){
-//	if(Disp_Color == false) lcd.fillScreen(true);
-//
-//	lcd.print(36, 2, 8, 12, Terminal8x12, Disp_Color, (char *)"PID");
-//	lcd.drawRect(10, 1, 76, 13, Disp_Color);
-//
-//	Draw_Menu(PID_Scr_Item, 5, 16, Selecting);
-//}
-//
-//void Menu_RTC_Scr(int8_t Selecting){
-//	if(Disp_Color == false) lcd.fillScreen(true);
-//
-//	lcd.print(12, 2, 8, 12, Terminal8x12, Disp_Color, (char *)"REAL TIME");
-//	lcd.print(28, 14, 8, 12, Terminal8x12, Disp_Color, (char *)"CLOCK");
-//	lcd.drawRect(10, 1, 76, 25, Disp_Color);
-//
-//	Draw_Menu(RTC_Scr_Item, 3, 29, Selecting);
-//}
-//
-//void Menu_Handle_Scr(uint16_t Temp_ADC, uint16_t Handle_Temp_ADC, bool Test, bool Rung){
-//	char Label_Buf[12];
-//
-//	if(Disp_Color == false) lcd.fillScreen(true);
-//
-//	lcd.print(24, 2, 8, 12, Terminal8x12, Disp_Color, (char *)"HANDLE");
-//	lcd.drawRect(10, 1, 76, 13, Disp_Color);
-//
-//	if(Test == true) {
-//		sprintf(Label_Buf, "State:%s", (char *)"Run");
-//		lcd.print(12, 16, 8, 12, Terminal8x12, Disp_Color, (char *)Label_Buf);
-//	}
-//	else {
-//		sprintf(Label_Buf, "State:%s", (char *)"Idle");
-//		lcd.print(8, 16, 8, 12, Terminal8x12, Disp_Color, (char *)Label_Buf);
-//	}
-//
-//	sprintf(Label_Buf, "1.%s:%d", (char *)"TipADC", Temp_ADC);
-//	lcd.print(1, 29, 8, 12, Terminal8x12, Disp_Color, (char *)Label_Buf);
-//
-//	sprintf(Label_Buf, "2.%s:%d", (char *)"H_TADC", Handle_Temp_ADC);
-//	lcd.print(1, 42, 8, 12, Terminal8x12, Disp_Color, (char *)Label_Buf);
-//
-//	sprintf(Label_Buf, "3.%s:", (char *)"Vibrate");
-//	lcd.print(1, 55, 8, 12, Terminal8x12, Disp_Color, (char *)Label_Buf);
-//
-//	if(Rung) lcd.drawBitmap(83, 55, Up_Bitmap, Up_W, Up_H, Disp_Color);
-//	else	 lcd.drawBitmap(83, 55, Down_Bitmap, Down_W, Down_H, Disp_Color);
-//
-//	lcd.Flushs();
-//	lcd.Clear();
-//}
-//
-//void Menu_Speaker_Scr(bool State){
-//	Draw_State_Item_2(State, (char *)"BLUETOOTH", (char *)"SPEAKER", (char *)"ON", (char *)"OFF");
-//}
-//
-//void Menu_SYSInfor_Scr(void){
-//	if(Disp_Color == false) lcd.fillScreen(true);
-//
-//	lcd.print(24, 2, 8, 12, Terminal8x12, Disp_Color, (char *)"SYSTEM");
-//	lcd.print(4, 15, 8, 12, Terminal8x12, Disp_Color, (char *)"INFORMATION");
-//	lcd.drawRect(2, 1, 92, 26, Disp_Color);
-//	uint8_t Y_Start = 28;
-//	for(uint8_t i=0; i<5; i++){
-//		lcd.print(1, Y_Start + i*8, Disp_Color, (char *)System_Information[i]);
-//	}
-//
-//	lcd.Flushs();
-//}
-//
-//
+void Menu_Calib_Scr(int8_t *Selecting){
+	///* Header */
+	tft.print(0, 0, Viet_Terminal8x20, HEADER_COLOR, HEADER_BG_COLOR, (char *)Header_Screen_Item[6]);
+	tft.fill_rectangle(0, 20, LCD_WIDTH, 2, HEADER_BG_COLOR);
+
+	gui_limit_counter(0, 5);
+	Draw_Menu(Calib_Scr_Item, 6, 22, Selecting);
+}
+
+void Menu_Parameter_Scr(int8_t *Selecting){
+	///* Header */
+	tft.print(0, 0, Viet_Terminal8x20, HEADER_COLOR, HEADER_BG_COLOR, (char *)Header_Screen_Item[7]);
+	tft.fill_rectangle(0, 20, LCD_WIDTH, 2, HEADER_BG_COLOR);
+
+	gui_limit_counter(0, 4);
+	Draw_Menu(Param_Scr_Item, 5, 22, Selecting);
+}
+
+void Menu_PID_Scr(int8_t *Selecting){
+	///* Header */
+	tft.print(0, 0, Viet_Terminal8x20, HEADER_COLOR, HEADER_BG_COLOR, (char *)Header_Screen_Item[8]);
+	tft.fill_rectangle(0, 20, LCD_WIDTH, 2, HEADER_BG_COLOR);
+
+	gui_limit_counter(0, 4);
+	Draw_Menu(PID_Scr_Item, 5, 22, Selecting);
+}
+
+void Menu_RTC_Scr(int8_t *Selecting){
+	///* Header */
+	tft.print(0, 0, Viet_Terminal8x20, HEADER_COLOR, HEADER_BG_COLOR, (char *)Header_Screen_Item[9]);
+	tft.fill_rectangle(0, 20, LCD_WIDTH, 2, HEADER_BG_COLOR);
+
+	gui_limit_counter(0, 2);
+	Draw_Menu(RTC_Scr_Item, 3, 22, Selecting);
+}
+
+void Menu_SYSInfor_Scr(void){
+	///* Header */
+	tft.print(0, 0, Viet_Terminal8x20, HEADER_COLOR, HEADER_BG_COLOR, (char *)Header_Screen_Item[10]);
+	tft.fill_rectangle(0, 20, LCD_WIDTH, 2, HEADER_BG_COLOR);
+
+	uint8_t Y_Start = 28;
+	for(uint8_t i=0; i<5; i++){
+		tft.print(1, Y_Start + i*20, Viet_Terminal8x20, TEXT_COLOR, BG_COLOR, (char *)System_Information[i]);
+	}
+}
+
+
 //void Draw_State_Item_1(bool State, char *Item, char *Option1, char *Option2){
 //	char Label_Buf[10];
 //

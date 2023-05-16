@@ -13,6 +13,8 @@
 
 #define ENABLE_COMPONENT_PID            1
 
+#define ENABLE_COMPONENT_KALMAN_FILER   1
+
 #define ENABLE_COMPONENT_BUTTON         1
 
 #define ENABLE_COMPONENT_EX_RTC   		1

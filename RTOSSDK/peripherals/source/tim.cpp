@@ -149,6 +149,10 @@ void tim::set_autoreload(uint32_t arl){
 	_tim -> ARR = arl;
 }
 
+void tim::set_counter(uint32_t counter){
+	_tim -> CNT = counter;
+}
+
 void tim::reset_counter(void){
 	_tim -> CNT = 0;
 }
@@ -1124,10 +1128,18 @@ int16_t tim::encoder_get_counter(void){
 	return (int16_t)((int16_t)counter/4);
 }
 
+void tim::encoder_set_counter(int16_t count){
+	counter = ((uint32_t)count)*4;
+	set_counter(counter);
+}
+
 uint32_t tim::encoder_get_base_counter(void){
 	return counter;
 }
 
+tim_direction_t tim::encoder_get_direction(void){
+	return (tim_direction_t)((_tim->CR1 & TIM_CR1_DIR)>>TIM_CR1_DIR_Pos);
+}
 
 /* TIMER INPUT CAPTURE MODE */
 stm_ret_t tim::set_mode_inputcapture(tim_channel_t channel, tim_inputcapture_t *conf){

@@ -48,6 +48,57 @@ spi_config_t spi2_conf = {
 };
 
 /**
+ * SPI1 and dma1_channel2, dma1_channel3 for SPI Flash.
+ */
+dma_config_t dma1_channel2_conf = {
+	.channel = DMA_Channel2,
+	.direction = DMA_PERIH_TO_MEM,
+	.mode = DMA_MODE_NORMAL,
+	.datasize = DMA_DATASIZE_8BIT,
+	.interruptoption = DMA_TRANSFER_COMPLETE_INTERRUPT,
+	.channelpriority = DMA_CHANNEL_PRIORITY_VERYHIGH,
+	.interruptpriority = 6,
+};
+
+dma_config_t dma1_channel3_conf = {
+	.channel = DMA_Channel3,
+	.direction = DMA_MEM_TO_PERIPH,
+	.mode = DMA_MODE_NORMAL,
+	.datasize = DMA_DATASIZE_8BIT,
+	.interruptoption = DMA_TRANSFER_COMPLETE_INTERRUPT,
+	.channelpriority = DMA_CHANNEL_PRIORITY_VERYHIGH,
+	.interruptpriority = 6,
+};
+
+spi_config_t spi1_conf = {
+	.mode = SPI_FULLDUPLEX_MASTER,
+	.control = SPI_DMA_CONTROL,
+	.clockdivision = SPI_CLOCKDIVISION_4,
+	.clkport = GPIOA,
+	.clkpin = 5,
+	.misoport = GPIOA,
+	.misopin = 6,
+	.mosiport = GPIOA,
+	.mosipin = 7,
+	.txdma = dma1_channel3,
+	.rxdma = dma1_channel2,
+};
+
+
+/**
+ * I2C1 for RTC.
+ */
+#define RTC_I2C i2c1
+i2c_config_t i2c1_conf = {
+	.mode = I2C_FAST_MODE,
+	.frequency = 400000UL,
+	.sclport = GPIOB,
+	.sclpin = 8,
+	.sdaport = GPIOB,
+	.sdapin = 9,
+};
+
+/**
  * TIM1 for encoder.
  */
 #define ENC_TIM tim1
@@ -70,7 +121,7 @@ tim_encoder_t tim_enc_conf = {
 /**
  * TIM2 channel2 for hot air heat wire PWM.
  */
-#define HA_TIM tim2
+#define SD_TIM tim2
 tim_config_t tim_ha_base_conf = {
 	.prescaler = 72,
 	.reload = 1000,
@@ -84,7 +135,7 @@ tim_pwm_t tim_ha_pwm_conf = {
 /**
  * TIM3 channel 1 for hot air heat wire PWM.
  */
-#define SD_TIM tim3
+#define HA_TIM tim3
 tim_config_t tim_sd_base_conf = {
 	.prescaler = 72,
 	.reload = 1000,
@@ -111,14 +162,14 @@ dma_config_t dma1_channel1_conf = {
 	.direction = DMA_PERIH_TO_MEM,
 	.mode = DMA_MODE_CIRCULAR,
 	.datasize = DMA_DATASIZE_16BIT,
-	.interruptoption = DMA_TRANSFER_ERROR_INTERRUPT,
-	.channelpriority = DMA_CHANNEL_PRIORITY_MEDIUM,
-	.interruptpriority = 6,
+	.interruptoption = DMA_TRANSFER_COMPLETE_INTERRUPT,
+	.channelpriority = DMA_CHANNEL_PRIORITY_HIGH,
+	.interruptpriority = 5,
 };
 GPIO_TypeDef *port_list[] = {GPIOA, GPIOA, GPIOA, GPIOA, GPIOB, GPIOB};
 uint16_t pin_list[] = {0, 1, 3, 4, 0, 1};
 uint8_t rank_list[] = {0, 1, 3, 4, 8, 9};
-adc_sampletime_t sampletime_list[] = {ADC_28_5_CYCLES, ADC_28_5_CYCLES, ADC_28_5_CYCLES, ADC_28_5_CYCLES, ADC_28_5_CYCLES, ADC_28_5_CYCLES};
+adc_sampletime_t sampletime_list[] = {ADC_13_5_CYCLES, ADC_13_5_CYCLES, ADC_13_5_CYCLES, ADC_13_5_CYCLES, ADC_13_5_CYCLES, ADC_13_5_CYCLES};
 adc_config_t adc1_conf = {
 	.prescaler = ADC_PRESCALER_6,
 	.continuos = ADC_CONTINUOS_ENABLE,
@@ -127,12 +178,9 @@ adc_config_t adc1_conf = {
 	.rank_list = rank_list,
 	.sampletime_list = sampletime_list,
 	.num_channel = 6,
+	.adc_temp_vref = true,
 	.dma = dma1_channel1,
 };
-
-
-
-
 
 
 
@@ -169,19 +217,46 @@ parameter_t show_data = {
 		.month = 0,
 		.year = 0,
 	},
-	.unit = true,
+	.unit = false,
 };
 
-uint16_t sd_temp_set = 0; // PID setpoint.
-pid_param_t sd_pid_param = {
-	.kp = 0.0,
-	.ki = 0.0,
-	.kd = 0.0,
-	.max_output = 0,
-	.min_output = 0,
-	.sample_time = 100U, // 10ms.
-};
-pid sd_pid;
+
+
+
+
+typedef struct {
+	/** System */
+	bool control_type = true;  // Defaut PID.
+	bool enable_buzzer = true; // Buzzer enable.
+	bool gui_theme = false;        // Default theme is light.
+
+	/** Sleep */
+	uint16_t sleep_temp = 100;
+	uint16_t  sleep_wait_time = 60;
+	bool enable_weakup = true; //8
+
+	/** Calibration */
+	uint16_t temp_offset = 0;
+	uint16_t temp_max = 500;
+	uint16_t temp_min = 28;
+	uint16_t adc_max = 4096;
+	uint16_t adc_min = 1100; //18
+
+	/** Parameter */
+	uint8_t encoder_step = 1;
+	uint16_t adc_error = 4096;
+	uint16_t over_temp = 510; //23
+	float voltage_threshold = 18.0;//25
+
+	/** PID */
+	pid_param_t sd_pid_param;
+	uint16_t sd_pwm = 999;
+
+	uint16_t sleep_tick_count = 0;
+
+} system_param_t;
+
+system_param_t param;
 
 #ifdef __cplusplus
 }

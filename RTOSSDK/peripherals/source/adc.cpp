@@ -38,7 +38,7 @@ stm_ret_t adc::init(adc_config_t *conf){
 
 	/* GPIO SETUP AT ANALOG MODE */
 	for(uint8_t i=0; i<_conf -> num_channel; i++) {
-		if(_conf -> pin_list[i] <= 15) gpio_set_mode(_conf -> port_list[i], _conf -> pin_list[i], GPIO_ANALOG);
+		if(_conf -> pin_list[i] <= 15 && _conf -> port_list[i] != NULL) gpio_set_mode(_conf -> port_list[i], _conf -> pin_list[i], GPIO_ANALOG);
 	}
 
 	/* ADC PRESCALER DIVISION */
@@ -101,6 +101,8 @@ stm_ret_t adc::init(adc_config_t *conf){
 	_adc -> SQR3 = ADC_SQR3; // ADC SEQUENCE NUMBER.
 
 	_adc -> SQR1 |= ((_conf -> num_channel - (uint8_t)1) << ADC_SQR1_L_Pos); // ADC NUMBER OF CONVERSION SEQUENCE
+
+	if(_conf->adc_temp_vref == true) _adc -> CR2 |= ADC_CR2_TSVREFE;
 
 	_adc -> CR2 |= ADC_CR2_ADON; // TURN ON ADC AND TO START CONVERSION
 

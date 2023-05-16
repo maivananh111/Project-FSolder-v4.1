@@ -186,6 +186,7 @@ class tim{
 		void set_prescaler (uint32_t psc);
 		void set_autoreload(uint32_t arl);
 
+		void set_counter(uint32_t counter);
 		void reset_counter(void);
 		uint32_t get_counter(void);
 		void delay_us(uint32_t us);
@@ -249,6 +250,8 @@ class tim{
 #endif
 		uint32_t encoder_get_base_counter(void);
 		int16_t encoder_get_counter(void);
+		void encoder_set_counter(int16_t count);
+		tim_direction_t encoder_get_direction(void);
 
 /* TIMER input capture mode */
 		stm_ret_t set_mode_inputcapture(tim_channel_t channel, tim_inputcapture_t *conf);

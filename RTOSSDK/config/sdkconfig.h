@@ -38,7 +38,7 @@ extern "C"{
  * RTOS Configuration.
  */
 #define CONFIG_TOTAL_HEAP_SIZE                 	    (20U * 1024U)
-#define CONFIG_RTOS_HEAP_SIZE                  	    (6U * 1024U)
+#define CONFIG_RTOS_HEAP_SIZE                  	    (8U * 1024U)
 #define CONFIG_RTOS_APP_MAIN_TASK_SIZE              byte_to_word(1*1024)
 #define CONFIG_RTOS_APP_MAIN_TASK_PRIO              1
 

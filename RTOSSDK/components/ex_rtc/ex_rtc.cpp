@@ -53,15 +53,16 @@ void DS3231_SetTime(rtc_time_t time){
 void DS3231_GetTime(rtc_time_t *time){
 	uint8_t get_time[7];
 
-	_i2c -> i2c_read_register(DS3231_ADDRESS, 0x00, 1, get_time, 7);
-
-	time->seconds 	 = bcdToDec(get_time[0]);
-	time->minutes 	 = bcdToDec(get_time[1]);
-	time->hour 		 = bcdToDec(get_time[2]);
-	time->dayofweek  = bcdToDec(get_time[3]);
-	time->dayofmonth = bcdToDec(get_time[4]);
-	time->month 	 = bcdToDec(get_time[5]);
-	time->year       = bcdToDec(get_time[6]);
+	stm_ret_t ret = _i2c -> i2c_read_register(DS3231_ADDRESS, 0x00, 1, get_time, 7);
+	if(is_oke(&ret)){
+		time->seconds 	 = bcdToDec(get_time[0]);
+		time->minutes 	 = bcdToDec(get_time[1]);
+		time->hour 		 = bcdToDec(get_time[2]);
+		time->dayofweek  = bcdToDec(get_time[3]);
+		time->dayofmonth = bcdToDec(get_time[4]);
+		time->month 	 = bcdToDec(get_time[5]);
+		time->year       = bcdToDec(get_time[6]);
+	}
 }
 
 float DS3231_GetTemp(void){
