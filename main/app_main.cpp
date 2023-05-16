@@ -170,10 +170,17 @@ void task_display(void *){
 				 * Heating handle.
 				 */
 				if(bits != 0){
-					if     (bits == SINGLE_CLICK_BIT) gui_main_activite = SETTING; // Đến giao diện đặt nhiệt độ.
-					else if(bits == DOUBLE_CLICK_BIT) gui_main_activite = SLEEPING;// Đến giao diện ngủ.
+					if     (bits == SINGLE_CLICK_BIT){
+						gui_main_activite = SETTING; // Đến giao diện đặt nhiệt độ.
+						LOG_INFO(TAG, "Switch to SETTING.");
+					}
+					else if(bits == DOUBLE_CLICK_BIT){
+						gui_main_activite = SLEEPING;// Đến giao diện ngủ.
+						LOG_INFO(TAG, "Switch to SLEEPING.");
+					}
 					else if(bits == LONG_PRESS_BIT) {
 						gui_main_activite = MENU;      // Đến giao diện menu.
+						LOG_INFO(TAG, "Switch to MENU.");
 						Encoder_Cnt = 0;
 						tim1->encoder_set_counter(0);
 					}
@@ -187,6 +194,7 @@ void task_display(void *){
 				 */
 				if(bits && (SINGLE_CLICK_BIT | DOUBLE_CLICK_BIT | LONG_PRESS_BIT)){
 					gui_main_activite = HEATING; // Đến giao diện Đang hoạt động.
+					LOG_INFO(TAG, "Switch to HEATING.");
 					gui_clear();
 				}
 			break;
@@ -194,6 +202,7 @@ void task_display(void *){
 				Temp_Set_Scr(&show_data);
 				if(bits == SINGLE_CLICK_BIT){
 					gui_main_activite = HEATING; // Đến giao diện Đang hoạt động.
+					LOG_INFO(TAG, "Switch to HEATING.");
 					/**
 					 * Save new temperature set value.
 					 */
@@ -201,56 +210,71 @@ void task_display(void *){
 				}
 			break;
 			case MENU:
-				Menu_Setting_Scr((int8_t *)&Encoder_Cnt);
-				if((bits == LONG_PRESS_BIT)){
-					gui_main_activite = HEATING; // Đến giao diện Đang hoạt động.
-					gui_clear();
+				if(gui_menu_layer == MENU_LAYER_1){
+					Menu_Setting_Scr((int8_t *)&Encoder_Cnt);
 				}
-				if(bits == SINGLE_CLICK_BIT){
-					switch(Encoder_Cnt){
+				else if(gui_menu_layer == MENU_LAYER_2){
+					switch(gui_menu_layer2_num){
 						case 0:
-
+							Temp_Set_Scr(&show_data);
 						break;
 						case 1:
-
+							Menu_System_Scr((int8_t *)&Encoder_Cnt);
 						break;
 						case 2:
-
+							Menu_Sleep_Scr((int8_t *)&Encoder_Cnt);
 						break;
 						case 3:
-
+							Menu_Calib_Scr((int8_t *)&Encoder_Cnt);
 						break;
 						case 4:
-
+							Menu_Param_Scr((int8_t *)&Encoder_Cnt);
 						break;
 						case 5:
-
+							Menu_PID_Scr((int8_t *)&Encoder_Cnt);
 						break;
 						case 6:
-
+							Menu_RTC_Scr((int8_t *)&Encoder_Cnt);
 						break;
 						case 7:
-
+							Menu_SYSInfor_Scr();
 						break;
 						case 8:
 							gui_main_activite = HEATING; // Đến giao diện Đang hoạt động.
-							gui_clear();
+							LOG_INFO(TAG, "Switch to HEATING.");
+							gui_menu_layer = MENU_LAYER_1;
+							gui_menu_layer2_num = 0;
+							Encoder_Cnt = gui_menu_layer2_num;
+							tim1->encoder_set_counter(gui_menu_layer2_num);
 						break;
 					}
+				}
+				if((bits == LONG_PRESS_BIT)){
+					gui_main_activite = HEATING; // Đến giao diện Đang hoạt động.
+					LOG_INFO(TAG, "Switch to HEATING.");
+					gui_clear();
+				}
+				if(bits == SINGLE_CLICK_BIT){
+					if(gui_menu_layer == MENU_LAYER_1){
+						gui_menu_layer = MENU_LAYER_2;
+						LOG_INFO(TAG, "Switch to MENU_LAYER_2.");
+						gui_menu_layer2_num = Encoder_Cnt;
+						Encoder_Cnt = 0;
+						tim1->encoder_set_counter(0);
+					}
+					else if(gui_menu_layer == MENU_LAYER_2){
+						gui_menu_layer = MENU_LAYER_1;
+						LOG_INFO(TAG, "Switch to MENU_LAYER_1.");
+						Encoder_Cnt = gui_menu_layer2_num;
+						tim1->encoder_set_counter(gui_menu_layer2_num);
+					}
+					gui_clear();
 				}
 
 			break;
 		}
 
 
-
-
-//		Menu_System_Scr((int8_t *)&Encoder_Cnt);
-//		Menu_Sleep_Scr((int8_t *)&Encoder_Cnt);
-//		Menu_Calib_Scr((int8_t *)&Encoder_Cnt);
-//		Menu_PID_Scr((int8_t *)&Encoder_Cnt);
-//		Menu_RTC_Scr((int8_t *)&Encoder_Cnt);
-//		Menu_SYSInfor_Scr();
 		vTaskDelay(5);
 	}
 }
@@ -299,15 +323,15 @@ void tim1_event_handler(tim_channel_t channel, tim_event_t event, void *param){
 
 
 void read_storage_param(system_param_t *parameter){
-	char *Rxbuf = (char *)malloc(37*sizeof(uint8_t));
-	flash.ReadBytes(FLASH_PARAM_STORAGE_ADDRESS, (uint8_t *)Rxbuf, 37);
+	char *Rxbuf = (char *)malloc(40*sizeof(uint8_t));
+	flash.ReadBytes(FLASH_PARAM_STORAGE_ADDRESS, (uint8_t *)Rxbuf, 40);
 
 	/** System */
 	parameter->control_type  = Rxbuf[0];
 	parameter->enable_buzzer = Rxbuf[1];
 	parameter->gui_theme     = Rxbuf[2];
 	/** Sleep */
-	parameter->sleep_temp    = (Rxbuf[3]<<8) | Rxbuf[4];
+	parameter->sleep_temp_set  = (Rxbuf[3]<<8) | Rxbuf[4];
 	parameter->sleep_wait_time = (Rxbuf[5]<<8) | Rxbuf[6];
 	parameter->enable_weakup = Rxbuf[7];
 	/** Calibration */
@@ -320,29 +344,31 @@ void read_storage_param(system_param_t *parameter){
 	parameter->encoder_step  = Rxbuf[18];
 	parameter->adc_error     = (Rxbuf[19]<<8) | Rxbuf[20];
 	parameter->over_temp     = (Rxbuf[21]<<8) | Rxbuf[22];
-	parameter->voltage_threshold = (Rxbuf[23]<<8) | Rxbuf[24];
+	parameter->voltage_threshold = Rxbuf[23] + Rxbuf[24]/100;
 	/** PID */
 	parameter->sd_pid_param.direction = (pid_direction_t)Rxbuf[25];
-	parameter->sd_pid_param.kp = (Rxbuf[26]<<8) | Rxbuf[27];
-	parameter->sd_pid_param.ki = (Rxbuf[28]<<8) | Rxbuf[29];
-	parameter->sd_pid_param.kd = (Rxbuf[30]<<8) | Rxbuf[31];
-	parameter->sd_pid_param.max_output = (Rxbuf[32]<<8) | Rxbuf[33];
-	parameter->sd_pid_param.min_output = (Rxbuf[34]<<8) | Rxbuf[35];
+	parameter->sd_pid_param.kp = Rxbuf[26]<<8 + Rxbuf[27]/100;
+	parameter->sd_pid_param.ki = Rxbuf[28]<<8 + Rxbuf[29]/100;
+	parameter->sd_pid_param.kd = Rxbuf[30]<<8 + Rxbuf[31]/100;
+	parameter->sd_pid_param.max_output = Rxbuf[32] + Rxbuf[33]/100;
+	parameter->sd_pid_param.min_output = Rxbuf[34] + Rxbuf[35]/100;
 	parameter->sd_pid_param.sample_time = (Rxbuf[36]<<8) | Rxbuf[37];
+
+	parameter->temp_set = (Rxbuf[38]<<8) | Rxbuf[39];
 
 	free(Rxbuf);
 }
 
 void write_storage_param(system_param_t *parameter){
-	char *Data = (char *)malloc(37*sizeof(uint8_t));
+	char *Data = (char *)malloc(40*sizeof(uint8_t));
 
 	/** System */
 	Data[0] = parameter->control_type;
 	Data[1] = parameter->enable_buzzer;
 	Data[2] = parameter->gui_theme;
 	/** Sleep */
-	Data[3] = (parameter->sleep_temp >> 8);
-	Data[4] = (parameter->sleep_temp & 0xFF);
+	Data[3] = (parameter->sleep_temp_set >> 8);
+	Data[4] = (parameter->sleep_temp_set & 0xFF);
 	Data[5] = (parameter->sleep_wait_time >> 8);
 	Data[6] = (parameter->sleep_wait_time & 0xFF);
 	Data[7] = parameter->enable_weakup;
@@ -380,7 +406,10 @@ void write_storage_param(system_param_t *parameter){
 	Data[36] = (uint8_t)(parameter->sd_pid_param.sample_time);
 	Data[37] = (int)(parameter->sd_pid_param.sample_time*100)%100;
 
-	flash.WriteBytes(FLASH_PARAM_STORAGE_ADDRESS, (uint8_t *)Data, 37);
+	Data[38] = (parameter->temp_set >> 8);
+	Data[39] = (parameter->temp_set & 0xFF);
+
+	flash.WriteBytes(FLASH_PARAM_STORAGE_ADDRESS, (uint8_t *)Data, 40);
 
 	free(Data);
 }

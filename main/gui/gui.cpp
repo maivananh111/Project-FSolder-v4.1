@@ -98,7 +98,8 @@ const char *Session_Str[]			= {"AM", "PM"};
 
 
 main_activite_t gui_main_activite = HEATING;
-
+menu_layer_t gui_menu_layer = MENU_LAYER_1;
+uint8_t gui_menu_layer2_num = 0;
 
 
 
@@ -409,7 +410,7 @@ void Menu_Calib_Scr(int8_t *Selecting){
 	Draw_Menu(Calib_Scr_Item, 6, 22, Selecting);
 }
 
-void Menu_Parameter_Scr(int8_t *Selecting){
+void Menu_Param_Scr(int8_t *Selecting){
 	///* Header */
 	tft.print(0, 0, Viet_Terminal8x20, HEADER_COLOR, HEADER_BG_COLOR, (char *)Header_Screen_Item[7]);
 	tft.fill_rectangle(0, 20, LCD_WIDTH, 2, HEADER_BG_COLOR);

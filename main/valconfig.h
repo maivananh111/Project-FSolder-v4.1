@@ -204,6 +204,7 @@ button_t enc_button = {
 
 parameter_t show_data = {
 	.tempset = 425,
+	.sleep_tempset = 100,
 	.temp = 375,
 	.voltage = 23.57,
 	.power = 51.3,
@@ -231,7 +232,7 @@ typedef struct {
 	bool gui_theme = false;        // Default theme is light.
 
 	/** Sleep */
-	uint16_t sleep_temp = 100;
+	uint16_t sleep_temp_set = 100;
 	uint16_t  sleep_wait_time = 60;
 	bool enable_weakup = true; //8
 
@@ -250,8 +251,10 @@ typedef struct {
 
 	/** PID */
 	pid_param_t sd_pid_param;
-	uint16_t sd_pwm = 999;
+	uint16_t temp_set = 425;
 
+
+	uint16_t sd_pwm = 999;
 	uint16_t sleep_tick_count = 0;
 
 } system_param_t;
