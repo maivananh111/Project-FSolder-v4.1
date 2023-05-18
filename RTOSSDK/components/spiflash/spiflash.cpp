@@ -44,7 +44,9 @@ SPIFLASH::SPIFLASH(GPIO_TypeDef *CSPort, uint16_t CSPin){
 }
 #endif
 
-SPIFLASH::SPIFLASH(void){}
+SPIFLASH::SPIFLASH(void){
+	_spi = NULL;
+}
 
 #ifdef SPIFLASH_CSPIN_EN
 void SPIFLASH::CS_Active(void){

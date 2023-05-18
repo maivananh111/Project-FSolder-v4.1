@@ -60,12 +60,12 @@ class SPIFLASH {
 
 	private:
 #ifdef SPIFLASH_CSPIN_EN
-		GPIO_TypeDef *_csport;
-		uint16_t _cspin;
+		GPIO_TypeDef *_csport = NULL;
+		uint16_t _cspin = 0;
 		void CS_Active(void);
 		void CS_Idle(void);
 #endif
-		spi_t _spi;
+		spi_t _spi = NULL;
 		void Reset(void);
 		uint8_t ReadStatusRegister(uint8_t Register_Number);
 		void WriteEnable(void);

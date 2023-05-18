@@ -78,7 +78,7 @@ const char *Calib_Scr_Item[]     = {"Độ lệch nhiệt độ.",
 									"Giới hạn ADC dưới",
 									"Thoát.           "};
 const char *Param_Scr_Item[]     = {"Bước encoder.    ",
-									"Lỗi tay hàn(ADC).",
+									"Lỗi tay hàn.     ",
 									"Lỗi quá nhiệt.   ",
 									"Ngưỡng nguồn cấp.",
 									"Thoát.           "};
@@ -100,6 +100,7 @@ const char *Session_Str[]			= {"AM", "PM"};
 main_activite_t gui_main_activite = HEATING;
 menu_layer_t gui_menu_layer = MENU_LAYER_1;
 uint8_t gui_menu_layer2_num = 0;
+uint8_t gui_menu_layer3_num = 0;
 
 
 
@@ -120,34 +121,12 @@ bool theme = true; //False=Light, True=Dark.
 int16_t limit_bottom, limit_top;
 
 
-#define DARK_BG_COLOR        BLACK
-#define DARK_TEXT_COLOR      WHITE
-#define DARK_CONTAIN_COLOR   CYAN
-#define DARK_TEMP_COLOR      GREEN //ORANGE
-#define DARK_HEADER_COLOR    YELLOW
-#define DARK_HEADER_BG_COLOR NAVY //BLUE
-
-#define LIGHT_BG_COLOR        WHITE
-#define LIGHT_TEXT_COLOR      0x101010 //BLACK
-#define LIGHT_CONTAIN_COLOR   0x0085FF //BLUE
-#define LIGHT_TEMP_COLOR      RED
-#define LIGHT_HEADER_COLOR    WHITE
-#define LIGHT_HEADER_BG_COLOR DARKGREEN
-
-#define BG_COLOR        ((theme)? DARK_BG_COLOR:LIGHT_BG_COLOR)
-#define TEXT_COLOR      ((theme)? DARK_TEXT_COLOR:LIGHT_TEXT_COLOR)
-#define CONTAIN_COLOR   ((theme)? DARK_CONTAIN_COLOR:LIGHT_CONTAIN_COLOR)
-#define TEMP_COLOR      ((theme)? DARK_TEMP_COLOR:LIGHT_TEMP_COLOR)
-#define HEADER_COLOR    ((theme)? DARK_HEADER_COLOR :LIGHT_HEADER_COLOR )
-#define HEADER_BG_COLOR ((theme)? DARK_HEADER_BG_COLOR:LIGHT_HEADER_BG_COLOR)
-
-void gui_limit_counter(int16_t bottom, int16_t top);
 int8_t Option_Limit(int8_t *Input, int8_t Bottom, int8_t Top);
 int8_t Option_Limit_Invt(int8_t Input, int8_t Bottom, int8_t Top);
 void write_num(uint16_t x, uint16_t y, uint16_t color, uint16_t b_color, uint16_t num);
-void Print_Temperature(uint8_t x, uint8_t y, uint16_t Temperature, bool Unit);
+void Print_Temperature(uint8_t x, uint8_t y, uint16_t Temperature, bool Unit, uint16_t temp_color);
 void Draw_Menu(const char *Item_String[], uint8_t Num_Item, uint8_t Y_Start, int8_t *Selecting);
-void Show_Scr(parameter_t *param, const char *header);
+void Show_Scr(parameter_t *param, const char *header, uint16_t temp_color);
 
 void gui_limit_counter(int16_t bottom, int16_t top){
 	limit_bottom = bottom;
@@ -237,7 +216,7 @@ void write_num(uint16_t x, uint16_t y, uint16_t color, uint16_t b_color, uint16_
 
 }
 
-void Print_Temperature(uint8_t x, uint8_t y, uint16_t Temperature, bool Unit){
+void Print_Temperature(uint8_t x, uint8_t y, uint16_t Temperature, bool Unit, uint16_t temp_color){
 	uint8_t X = 0;
 	uint8_t D_X = 0;
 	if(Temperature<10){
@@ -255,11 +234,11 @@ void Print_Temperature(uint8_t x, uint8_t y, uint16_t Temperature, bool Unit){
 
 //	tft.fill_rectangle(x, y, LCD_WIDTH, 50, BG_COLOR);
 
-	write_num(X, y, TEMP_COLOR, BG_COLOR, Temperature);
-	tft.draw_MkE_bitmap(D_X, y, 16, 50, TEMP_COLOR, BG_COLOR, Degree_Ubuntu16x50);
+	write_num(X, y, temp_color, BG_COLOR, Temperature);
+	tft.draw_MkE_bitmap(D_X, y, 16, 50, temp_color, BG_COLOR, Degree_Ubuntu16x50);
 	(Unit == false)?
-		tft.draw_MkE_bitmap(D_X+16, y, 36, 50, TEMP_COLOR, BG_COLOR, Ubuntu36x50[10]):
-		tft.draw_MkE_bitmap(D_X+16, y, 36, 50, TEMP_COLOR, BG_COLOR, Ubuntu36x50[11]);
+		tft.draw_MkE_bitmap(D_X+16, y, 36, 50, temp_color, BG_COLOR, Ubuntu36x50[10]):
+		tft.draw_MkE_bitmap(D_X+16, y, 36, 50, temp_color, BG_COLOR, Ubuntu36x50[11]);
 }
 
 void Draw_Menu(const char *Item_String[], uint8_t Num_Item, uint8_t Y_Start, int8_t *Selecting) {
@@ -313,13 +292,13 @@ void Draw_Menu(const char *Item_String[], uint8_t Num_Item, uint8_t Y_Start, int
 	}
 }
 
-void Show_Scr(parameter_t *param, const char *header){
+void Show_Scr(parameter_t *param, const char *header, uint16_t temp_color){
 	char Main_Buf[10];
 
-	Print_Temperature(0, 78, param->temp, param->unit);
+	Print_Temperature(0, 78, param->temp, param->unit, temp_color);
 
 ///* Hàng 3 */
-	(param->unit)? sprintf(Main_Buf, "Set:%d@F", param->tempset) : sprintf(Main_Buf, "Set:%d@C", param->tempset);
+	(param->unit)? sprintf(Main_Buf, "Set:%3d@F", param->tempset) : sprintf(Main_Buf, "Set:%3d@C", param->tempset);
 	tft.print(4, 58, Viet_Terminal8x20, TEXT_COLOR, BG_COLOR, (char *)Main_Buf);
 	(param->unit)? sprintf(Main_Buf, "ITem:%d@F", param->intemp) : sprintf(Main_Buf, "ITem:%d@C", param->intemp);
 	tft.print(84, 58, Viet_Terminal8x20, TEXT_COLOR, BG_COLOR, (char *)Main_Buf);
@@ -340,23 +319,22 @@ void Show_Scr(parameter_t *param, const char *header){
 	tft.print(0, 0, Viet_Terminal8x20, HEADER_COLOR, HEADER_BG_COLOR, (char *)header);
 	tft.fill_rectangle(0, 20, LCD_WIDTH, 2, HEADER_BG_COLOR);
 
-///* Ô 3 */
-//	tft.draw_rect(0, 58, LCD_WIDTH, 18, CONTAIN_COLOR);
-//	tft.fill_rectangle(80, 59, 1, 16, CONTAIN_COLOR);
-///* Ô 2 */
-//	tft.draw_rect(0, 40, LCD_WIDTH, 18, CONTAIN_COLOR);
-//	tft.fill_rectangle(80, 41, 1, 16, CONTAIN_COLOR);
-///* Ô 1 */
-//	tft.draw_rect(0, 22, LCD_WIDTH, 18, CONTAIN_COLOR);
-//	tft.fill_rectangle(80, 23, 1, 16, CONTAIN_COLOR);
+}
+
+void Error_Scr(char *mes){
+	///* Header */
+	tft.print(0, 0, Viet_Terminal8x20, HEADER_COLOR, HEADER_BG_COLOR, (char *)"        LỖI        ");
+	tft.fill_rectangle(0, 20, LCD_WIDTH, 2, HEADER_BG_COLOR);
+
+	tft.print(0, 64, Viet_Terminal8x20, RED, BG_COLOR, mes);
 }
 
 void Heating_Scr(parameter_t *param){
-	Show_Scr(param, Header_Screen_Item[0]);
+	Show_Scr(param, Header_Screen_Item[0], HEAT_TEMP_COLOR);
 }
 
 void Sleeping_Scr(parameter_t *param){
-	Show_Scr(param, Header_Screen_Item[1]);
+	Show_Scr(param, Header_Screen_Item[1], SLEEP_TEMP_COLOR);
 }
 
 void Menu_Setting_Scr(int8_t *Selecting){
@@ -375,7 +353,7 @@ void Temp_Set_Scr(parameter_t *param){
 	tft.print(0, 0, Viet_Terminal8x20, HEADER_COLOR, HEADER_BG_COLOR, (char *)Header_Screen_Item[3]);
 	tft.fill_rectangle(0, 20, LCD_WIDTH, 2, HEADER_BG_COLOR);
 
-	Print_Temperature(0, 30, param->tempset, param->unit);
+	Print_Temperature(0, 30, param->tempset, param->unit, SET_TEMP_COLOR);
 
 	(param->unit)? sprintf(Main_Buf, "Hiện tại: %3d@F     ", param->temp): sprintf(Main_Buf, "Hiện tại: %3d@C     ", param->temp);
 	tft.print(0, 80, Viet_Terminal8x20, TEXT_COLOR, BG_COLOR, (char *)Main_Buf);

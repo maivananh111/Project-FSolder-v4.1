@@ -13,6 +13,7 @@
 #include "sdkconfig.h"
 
 #include "periph/exti.h"
+#include "periph/gpio.h"
 #include "system/system.h"
 #include "periph/systick.h"
 #if CONFIG_USE_LOG_MONITOR && EXTI_LOG
@@ -69,6 +70,8 @@ stm_ret_t exti_init(GPIO_TypeDef *Port, uint16_t Pin, exti_edgedetect_t Edge, ui
 		return ret;
 	}
 
+	gpio_port_clock_enable(Port);
+	gpio_set_mode(Port, Pin, GPIO_INPUT_PULL);
 
 	if(Pin < 4U) 					CRPos = 0;
 	else if(Pin >= 4U && Pin < 8U)  CRPos = 1;
@@ -96,8 +99,10 @@ stm_ret_t exti_init(GPIO_TypeDef *Port, uint16_t Pin, exti_edgedetect_t Edge, ui
 
 	EXTI -> IMR |= (1U << Pin);
 
+	__NVIC_ClearPendingIRQ(IRQn);
 	__NVIC_SetPriority(IRQn, Priority);
 	__NVIC_EnableIRQ(IRQn);
+	__NVIC_ClearPendingIRQ(IRQn);
 
 	return ret;
 }
@@ -138,6 +143,11 @@ void EXTI_IRQHandler(uint16_t Pin){
 	if(EXTI -> PR & (1U << Pin)){
 		EXTI -> PR = (1U << Pin);
 		if(handler_callback[Pin] != NULL) handler_callback[Pin](parameter[Pin]);
+		IRQn_Type IRQn;
+		if(Pin < 5U) IRQn = (IRQn_Type)(Pin + EXTI_LINE_INDEX);
+		else if(Pin >= 5U && Pin < 9U) IRQn = EXTI9_5_IRQn;
+		else 						   IRQn = EXTI15_10_IRQn;
+		__NVIC_ClearPendingIRQ(IRQn);
 	}
 }
 

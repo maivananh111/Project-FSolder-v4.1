@@ -138,11 +138,12 @@ tim_pwm_t tim_ha_pwm_conf = {
 #define HA_TIM tim3
 tim_config_t tim_sd_base_conf = {
 	.prescaler = 72,
-	.reload = 1000,
+	.reload = 500,
 };
 tim_pwm_t tim_sd_pwm_conf = {
 	.port = GPIOB,
 	.pin = 4,
+	.invert = TIM_PWM_INVERT,
 	.preload = TIM_PRELOAD_ENABLE,
 };
 
@@ -169,7 +170,7 @@ dma_config_t dma1_channel1_conf = {
 GPIO_TypeDef *port_list[] = {GPIOA, GPIOA, GPIOA, GPIOA, GPIOB, GPIOB};
 uint16_t pin_list[] = {0, 1, 3, 4, 0, 1};
 uint8_t rank_list[] = {0, 1, 3, 4, 8, 9};
-adc_sampletime_t sampletime_list[] = {ADC_13_5_CYCLES, ADC_13_5_CYCLES, ADC_13_5_CYCLES, ADC_13_5_CYCLES, ADC_13_5_CYCLES, ADC_13_5_CYCLES};
+adc_sampletime_t sampletime_list[] = {ADC_28_5_CYCLES, ADC_28_5_CYCLES, ADC_28_5_CYCLES, ADC_28_5_CYCLES, ADC_28_5_CYCLES, ADC_28_5_CYCLES};
 adc_config_t adc1_conf = {
 	.prescaler = ADC_PRESCALER_6,
 	.continuos = ADC_CONTINUOS_ENABLE,
@@ -233,7 +234,7 @@ typedef struct {
 
 	/** Sleep */
 	uint16_t sleep_temp_set = 100;
-	uint16_t  sleep_wait_time = 60;
+	uint16_t  sleep_wait_time = 20;
 	bool enable_weakup = true; //8
 
 	/** Calibration */
@@ -245,21 +246,25 @@ typedef struct {
 
 	/** Parameter */
 	uint8_t encoder_step = 1;
-	uint16_t adc_error = 4096;
+	uint16_t temp_error = 650;
 	uint16_t over_temp = 510; //23
-	float voltage_threshold = 18.0;//25
+	float voltage_threshold = 18.5;//25
 
 	/** PID */
 	pid_param_t sd_pid_param;
-	uint16_t temp_set = 425;
+	uint16_t temp_set = 200;
 
 
 	uint16_t sd_pwm = 999;
+
+	uint8_t l_seconds = 0;
 	uint16_t sleep_tick_count = 0;
+	bool force_sleep = false;
+	uint16_t tempset_before_sleep = 0;
 
 } system_param_t;
 
-system_param_t param;
+system_param_t sys_param;
 
 #ifdef __cplusplus
 }
